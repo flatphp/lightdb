@@ -1,0 +1,20 @@
+{
+    "name": "lightdb",
+    "description": "simple light db component",
+    "keywords": ["lightdb", "database"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Fred Yang",
+            "email": "shuky2000@163.com"
+        }
+    ],
+    "require": {
+	    "php": ">=5.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lightdb\\": ""
+        }
+    }
+}
