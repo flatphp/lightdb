@@ -1,5 +1,5 @@
 {
-    "name": "lightdb",
+    "name": "flatphp/lightdb",
     "description": "simple light db component",
     "keywords": ["lightdb", "database"],
     "license": "MIT",
