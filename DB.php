@@ -4,7 +4,7 @@
 class DB
 {
     protected static $conf;
-    protected static $conn;
+    protected static $conns = [];
 
     public static function init(array $conf)
     {
@@ -14,12 +14,28 @@ class DB
     /**
      * @return Conn
      */
-    public static function getConn()
+    public static function getConn($name = null)
     {
-        if (null === self::$conn) {
-            self::$conn = new Conn(self::$conf);
+        if (!$name) {
+            return self::defaultConn();
         }
-        return self::$conn;
+        $conf = self::$conf[$name];
+        if (!isset(self::$conns[$name])) {
+            self::$conns[$name] = new Conn($conf);
+        }
+        return self::$conns[$name];
+    }
+
+    /**
+     * @return Conn
+     */
+    protected static function defaultConn()
+    {
+        static $conn = null;
+        if (null === $conn) {
+            $conn = new Conn(self::$conf);
+        }
+        return $conn;
     }
 
     /**
@@ -29,6 +45,6 @@ class DB
      */
     public static function __callStatic($method, $args = [])
     {
-        return call_user_func_array([self::getConn(), $method], $args);
+        return call_user_func_array([self::defaultConn(), $method], $args);
     }
 }

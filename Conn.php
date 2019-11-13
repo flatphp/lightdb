@@ -5,8 +5,12 @@ use PDOStatement;
 
 class Conn
 {
-    protected $pdo;
+    protected $conf_master;
+    protected $conf_slaves = [];
+    protected $options = [];
     protected $txns = 0; // nested transactions
+    protected $conn_master;
+    protected $conn_slave;
 
     /**
      * [
@@ -14,14 +18,68 @@ class Conn
      *   'username' => 'root',
      *   'password' => '123456',
      *   'options' => [PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8'],
+     *   'slaves' => array(
+     *     [...],
+     *   )
      * ]
      * @param array $conf
      */
     public function __construct(array $conf)
     {
-        $options = isset($conf['options']) ? $conf['options'] : [];
+        if (isset($conf['slaves'])) {
+            $this->conf_slaves = $conf['slaves'];
+            unset($conf['slaves']);
+        }
+        if (isset($conf['options'])) {
+            $this->options = $conf['options'];
+            unset($conf['options']);
+        }
+        $this->conf_master = $conf;
+    }
+
+    /**
+     * get master connection
+     * @return PDO
+     */
+    protected function master()
+    {
+        if (null === $this->conn_master) {
+            $this->conn_master = $this->connect($this->conf_master, $this->options);
+        }
+        return $this->conn_master;
+    }
+
+    /**
+     * get slave connection
+     * @return PDO
+     */
+    protected function slave()
+    {
+        if (empty($this->conf_slaves) || $this->txns > 0) {
+            return $this->master();
+        }
+        if (null === $this->conn_slave) {
+            $i = mt_rand(0, count($this->conf_slaves)-1);
+            $conf = $this->conf_slaves[$i];
+            if (isset($conf['options'])) {
+                $options = array_diff_key($this->options, $conf['options']) + $conf['options'];
+            } else {
+                $options = $this->options;
+            }
+            $this->conn_slave = $this->connect($conf, $options);
+        }
+        return $this->conn_slave;
+    }
+
+    /**
+     * @param array $conf
+     * @param array $options
+     * @return PDO
+     */
+    protected function connect(array $conf, array $options = [])
+    {
         $options = array_diff_key([PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION], $options) + $options;
-        $this->pdo = new PDO($conf['dsn'], $conf['username'], $conf['password'], $options);
+        return new PDO($conf['dsn'], $conf['username'], $conf['password'], $options);
     }
 
     /**
@@ -29,7 +87,7 @@ class Conn
      */
     public function getPdo()
     {
-        return $this->pdo;
+        return $this->master();
     }
 
     /**
@@ -132,7 +190,7 @@ class Conn
      */
     public function selectPrepare($sql, $bind = null, $fetch_mode = null)
     {
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->slave()->prepare($sql);
         $stmt->execute($this->bind($bind));
         if (null !== $fetch_mode) {
             $stmt->setFetchMode($fetch_mode);
@@ -149,7 +207,7 @@ class Conn
      */
     public function execute($sql, $bind = null, &$affected_rows = 0)
     {
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->master()->prepare($sql);
         $res = $stmt->execute($this->bind($bind));
         $affected_rows = $stmt->rowCount();
         return $res;
@@ -161,7 +219,7 @@ class Conn
      */
     public function getLastInsertId()
     {
-        return $this->pdo->lastInsertId();
+        return $this->master()->lastInsertId();
     }
 
     /**
@@ -172,7 +230,7 @@ class Conn
     {
         ++$this->txns;
         if ($this->txns == 1) {
-            $this->pdo->beginTransaction();
+            $this->master()->beginTransaction();
         }
     }
 
@@ -183,7 +241,7 @@ class Conn
     public function commit()
     {
         if ($this->txns == 1) {
-            $this->pdo->commit();
+            $this->master()->commit();
         }
         --$this->txns;
     }
@@ -195,13 +253,16 @@ class Conn
     public function rollBack()
     {
         if ($this->txns == 1) {
-            $this->pdo->rollBack();
+            $this->master()->rollBack();
             $this->txns = 0;
         } else {
             --$this->txns;
         }
     }
 
+    /**
+     * @return int
+     */
     public function getTransactionLevel()
     {
         return $this->txns;
