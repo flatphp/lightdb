@@ -24,6 +24,9 @@ $sql = 'select * from test where id>?';
 // static use
 $data = DB::fetchAllIndexed($sql, 2);
 
+$sql = 'insert into test(aa, bb) values(?, ?)';
+$res = DB::execute($sql, [1, 2]);
+
 // connection instance use
 $conn = DB::getConn();
 $sql = 'select * from channel where id>?';
@@ -58,7 +61,7 @@ DB::init($conf);
 
 // write to master db
 $sql = 'insert into test(aa) values(1)';
-$res = DB::exec($sql);
+$res = DB::execute($sql);
 
 // select from slave db
 $sql = 'select * from test';
