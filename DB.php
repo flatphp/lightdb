@@ -12,6 +12,7 @@ class DB
     }
 
     /**
+     * @param string|null $name
      * @return Conn
      */
     public static function getConn($name = null)
@@ -24,6 +25,16 @@ class DB
             self::$conns[$name] = new Conn($conf);
         }
         return self::$conns[$name];
+    }
+
+    /**
+     * @param string|null $name
+     * @param array $options
+     * @return Query
+     */
+    public static function query($name = null)
+    {
+        return new Query(self::getConn($name));
     }
 
     /**
