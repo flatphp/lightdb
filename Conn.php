@@ -9,8 +9,9 @@ class Conn
     protected $conf_slaves = [];
     protected $options = [];
     protected $txns = 0; // nested transactions
-    protected $conn_master;
-    protected $conn_slave;
+    protected $pdo_master;
+    protected $pdo_slave;
+    protected $force = 0;
 
     /**
      * [
@@ -37,39 +38,6 @@ class Conn
         $this->conf_master = $conf;
     }
 
-    /**
-     * get master connection
-     * @return PDO
-     */
-    protected function master()
-    {
-        if (null === $this->conn_master) {
-            $this->conn_master = $this->connect($this->conf_master, $this->options);
-        }
-        return $this->conn_master;
-    }
-
-    /**
-     * get slave connection
-     * @return PDO
-     */
-    protected function slave()
-    {
-        if (empty($this->conf_slaves) || $this->txns > 0) {
-            return $this->master();
-        }
-        if (null === $this->conn_slave) {
-            $i = mt_rand(0, count($this->conf_slaves)-1);
-            $conf = $this->conf_slaves[$i];
-            if (isset($conf['options'])) {
-                $options = array_diff_key($this->options, $conf['options']) + $conf['options'];
-            } else {
-                $options = $this->options;
-            }
-            $this->conn_slave = $this->connect($conf, $options);
-        }
-        return $this->conn_slave;
-    }
 
     /**
      * @param array $conf
@@ -83,12 +51,57 @@ class Conn
     }
 
     /**
+     * get master connection
      * @return PDO
      */
-    public function getPdo()
+    protected function masterPDO()
     {
-        return $this->master();
+        if (null === $this->pdo_master) {
+            $this->pdo_master = $this->connect($this->conf_master, $this->options);
+        }
+        $this->force = 0; // reset force
+        return $this->pdo_master;
     }
+
+    /**
+     * get slave connection
+     * @return PDO
+     */
+    protected function slavePDO()
+    {
+        if (empty($this->conf_slaves) || $this->txns > 0 || $this->force == 1) {
+            return $this->masterPDO();
+        }
+        if (null === $this->pdo_slave) {
+            $i = mt_rand(0, count($this->conf_slaves)-1);
+            $conf = $this->conf_slaves[$i];
+            if (isset($conf['options'])) {
+                $options = array_diff_key($this->options, $conf['options']) + $conf['options'];
+            } else {
+                $options = $this->options;
+            }
+            $this->pdo_slave = $this->connect($conf, $options);
+        }
+        return $this->pdo_slave;
+    }
+
+    /**
+     * @return PDO
+     */
+    public function getPDO()
+    {
+        return $this->masterPDO();
+    }
+
+    /**
+     * force use masterPDO
+     */
+    public function master()
+    {
+        $this->force = 1;
+        return $this;
+    }
+
 
     /**
      * fetch all array with assoc, empty array returned if nothing or false
@@ -190,7 +203,7 @@ class Conn
      */
     public function selectPrepare($sql, $bind = null, $fetch_mode = null)
     {
-        $stmt = $this->slave()->prepare($sql);
+        $stmt = $this->slavePDO()->prepare($sql);
         $stmt->execute($this->bind($bind));
         if (null !== $fetch_mode) {
             $stmt->setFetchMode($fetch_mode);
@@ -207,7 +220,7 @@ class Conn
      */
     public function execute($sql, $bind = null, &$affected_rows = 0)
     {
-        $stmt = $this->master()->prepare($sql);
+        $stmt = $this->masterPDO()->prepare($sql);
         $res = $stmt->execute($this->bind($bind));
         $affected_rows = $stmt->rowCount();
         return $res;
@@ -219,7 +232,7 @@ class Conn
      */
     public function getLastInsertId()
     {
-        return $this->master()->lastInsertId();
+        return $this->masterPDO()->lastInsertId();
     }
 
     /**
@@ -230,7 +243,7 @@ class Conn
     {
         ++$this->txns;
         if ($this->txns == 1) {
-            $this->master()->beginTransaction();
+            $this->masterPDO()->beginTransaction();
         }
     }
 
@@ -241,7 +254,7 @@ class Conn
     public function commit()
     {
         if ($this->txns == 1) {
-            $this->master()->commit();
+            $this->masterPDO()->commit();
         }
         --$this->txns;
     }
@@ -253,7 +266,7 @@ class Conn
     public function rollBack()
     {
         if ($this->txns == 1) {
-            $this->master()->rollBack();
+            $this->masterPDO()->rollBack();
             $this->txns = 0;
         } else {
             --$this->txns;

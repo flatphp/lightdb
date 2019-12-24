@@ -1,5 +1,5 @@
 # Lightdb
-Lightemp is a simple db component.
+Lightdb is a simple db component.
 
 # Install
 ```
@@ -28,7 +28,7 @@ $sql = 'insert into test(aa, bb) values(?, ?)';
 $res = DB::execute($sql, [1, 2]);
 
 // connection instance use
-$conn = DB::getConn();
+$conn = DB::conn();
 $sql = 'select * from channel where id>?';
 $data = $conn->fetchAll($sql, 2);
 ```
@@ -39,18 +39,18 @@ $data = $conn->fetchAll($sql, 2);
 use \Lightdb\DB;
 
 $conf = array(
-    'dsn' => 'mysql:host=localhost;dbname=testdb1',
+    'dsn' => 'mysql:host=master;dbname=testdb',
     'username' => 'root',
     'password' => '123456',
     'options' => [PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8'],
     'slaves' => array(
         [
-            'dsn' => 'mysql:host=localhost;dbname=testdb2',
+            'dsn' => 'mysql:host=slave1;dbname=testdb',
             'username' => 'root',
             'password' => '123456',
         ],
         [
-            'dsn' => 'mysql:host=localhost;dbname=testdb3',
+            'dsn' => 'mysql:host=slave2;dbname=testdb',
             'username' => 'root',
             'password' => '123456',
         ]
@@ -66,6 +66,10 @@ $res = DB::execute($sql);
 // select from slave db
 $sql = 'select * from test';
 $data = DB::fetchAll($sql);
+
+// force read from master
+$sql = 'select * from test';
+$data = DB::master()->fetchAll($sql);
 ```
 
 # Multiple DB Instance
@@ -78,8 +82,8 @@ $conf = array(
 );
 
 $sql = 'select * from test';
-DB::getConn('db1')->fetchRow($sql);
-DB::getConn('db2')->fetchPairs($sql);
+DB::conn('db1')->fetchRow($sql);
+DB::conn('db2')->fetchPairs($sql);
 ```
 
 
@@ -127,7 +131,10 @@ $query = DB::query()->delete('users')->where('id=?', 10);
 $sql = $query->getSql();
 $bind = $query->getBind();
 
-// print sql and bind
-DB::query()->delete('users')->where('id not in ?', [1,2,3])->log();
+// only print sql and bind
+DB::query()->delete('users')->where('id not in ??', [1,2,3])->log();
+
+// execute
+DB::query()->delete('users')->where('id not in ??', [1,2,3])->execute();
 ```
 

@@ -5,6 +5,7 @@ class DB
 {
     protected static $conf;
     protected static $conns = [];
+    protected static $queries = [];
 
     public static function init(array $conf)
     {
@@ -15,7 +16,7 @@ class DB
      * @param string|null $name
      * @return Conn
      */
-    public static function getConn($name = null)
+    public static function conn($name = null)
     {
         if (!$name) {
             return self::defaultConn();
@@ -29,12 +30,11 @@ class DB
 
     /**
      * @param string|null $name
-     * @param array $options
      * @return Query
      */
     public static function query($name = null)
     {
-        return new Query(self::getConn($name));
+        return new Query(self::conn($name));
     }
 
     /**
