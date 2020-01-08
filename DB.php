@@ -5,7 +5,6 @@ class DB
 {
     protected static $conf;
     protected static $conns = [];
-    protected static $queries = [];
 
     public static function init(array $conf)
     {
@@ -32,9 +31,12 @@ class DB
      * @param string|null $name
      * @return Query
      */
-    public static function query($name = null)
+    public static function query($conn = null)
     {
-        return new Query(self::conn($name));
+        if (!$conn instanceof Conn) {
+            $conn = self::conn($conn);
+        }
+        return new Query($conn);
     }
 
     /**

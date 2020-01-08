@@ -137,6 +137,42 @@ class Conn
     }
 
     /**
+     * fetch all to classes array, empty array returned if nothing or false
+     * @param string $name
+     * @param string $sql
+     * @param mixed $bind
+     * @return array
+     */
+    public function fetchAllTo($name, $sql, $bind = null)
+    {
+        return $this->selectPrepare($sql, $bind, PDO::FETCH_CLASS, $name)->fetchAll();
+    }
+
+    /**
+     * fetch all to classes array with firest field as indexed key, empty array returned if nothing or false
+     * @param string $name
+     * @param string $sql
+     * @param mixed $bind
+     * @return array
+     */
+    public function fetchAllIndexedTo($name, $sql, $bind = null)
+    {
+        return $this->selectPrepare($sql, $bind, PDO::FETCH_CLASS, $name)->fetchAll(PDO::FETCH_UNIQUE);
+    }
+
+    /**
+     * fetch all grouped array with first field as keys, empty array returned if nothing or false
+     * @param string $name
+     * @param string $sql
+     * @param mixed $bind
+     * @return array
+     */
+    public function fetchAllGroupedTo($name, $sql, $bind = null)
+    {
+        return $this->selectPrepare($sql, $bind, PDO::FETCH_CLASS, $name)->fetchAll(PDO::FETCH_GROUP);
+    }
+
+    /**
      * fetch one row array with assoc, empty array returned if nothing or false
      * @param string $sql
      * @param mixed $bind
@@ -145,6 +181,18 @@ class Conn
     public function fetchRow($sql, $bind = null)
     {
         return $this->selectPrepare($sql, $bind)->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * fetch one row to class, empty array returned if nothing or false
+     * @param string $name
+     * @param string $sql
+     * @param mixed $bind
+     * @return array
+     */
+    public function fetchRowTo($name, $sql, $bind = null)
+    {
+        return $this->selectPrepare($sql, $bind, PDO::FETCH_CLASS, $name)->fetch();
     }
 
     /**
@@ -201,13 +249,13 @@ class Conn
      * @param int $fetch_mode
      * @return PDOStatement
      */
-    public function selectPrepare($sql, $bind = null, $fetch_mode = null)
+    public function selectPrepare($sql, $bind = null, $fetch_mode = null, $fetch_arg = null)
     {
         $stmt = $this->slavePDO()->prepare($sql);
-        $stmt->execute($this->bind($bind));
         if (null !== $fetch_mode) {
-            $stmt->setFetchMode($fetch_mode);
+            $stmt->setFetchMode($fetch_mode, $fetch_arg);
         }
+        $stmt->execute($this->bind($bind));
         return $stmt;
     }
 

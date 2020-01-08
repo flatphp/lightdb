@@ -31,6 +31,12 @@ $res = DB::execute($sql, [1, 2]);
 $conn = DB::conn();
 $sql = 'select * from channel where id>?';
 $data = $conn->fetchAll($sql, 2);
+
+// fetch all to classes array
+$data = $conn->fetchAllTo('MyModel', $sql, 2);
+
+// fetch row to class
+$data = $conn->fetchTo('MyModel', $sql, 2);
 ```
 
 
@@ -93,6 +99,10 @@ DB::conn('db2')->fetchPairs($sql);
 ```php
 DB::query()->select('users', 'name, age')->where('age>?', 10)->fetchAll();
 
+// to class
+DB::query()->select('users', 'name, age')->where('age>?', 10)->fetchAll('MyModel');
+
+// nested
 DB::query('db2')->select('users')->where(function($w){
     return $w->where('sex=?', 1)->orWhere('class in ??', [1,2]);
 })->where('age>?', 10)->fetchRow();

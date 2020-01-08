@@ -140,24 +140,40 @@ class Select extends BuilderAbstract
         return $this->bind;
     }
 
-    public function fetchAll()
+    public function fetchAll($name = null)
     {
-        return $this->conn->fetchAll($this->getSql(), $this->bind);
+        if ($name) {
+            return $this->conn->fetchAllTo($name, $this->getSql(), $this->bind);
+        } else {
+            return $this->conn->fetchAll($this->getSql(), $this->bind);
+        }
     }
 
-    public function fetchAllIndexed()
+    public function fetchAllIndexed($name = null)
     {
-        return $this->conn->fetchAllIndexed($this->getSql(), $this->bind);
+        if ($name) {
+            return $this->conn->fetchAllIndexedTo($name, $this->getSql(), $this->bind);
+        } else {
+            return $this->conn->fetchAllIndexed($this->getSql(), $this->bind);
+        }
     }
 
-    public function fetchAllGrouped()
+    public function fetchAllGrouped($name = null)
     {
-        return $this->conn->fetchAllGrouped($this->getSql(), $this->bind);
+        if ($name) {
+            return $this->conn->fetchAllGroupedTo($name, $this->getSql(), $this->bind);
+        } else {
+            return $this->conn->fetchAllGrouped($this->getSql(), $this->bind);
+        }
     }
 
-    public function fetchRow()
+    public function fetchRow($name = null)
     {
-        return $this->conn->fetchRow($this->getSql(), $this->bind);
+        if ($name) {
+            return $this->conn->fetchRowTo($name, $this->getSql(), $this->bind);
+        } else {
+            return $this->conn->fetchRow($this->getSql(), $this->bind);
+        }
     }
 
     public function fetchColumn()
