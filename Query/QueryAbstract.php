@@ -1,8 +1,8 @@
-<?php namespace Lightdb\Builder;
+<?php namespace Lightdb\Query;
 
 use Lightdb\Conn;
 
-class BuilderAbstract extends SqlAbstract
+class QueryAbstract extends SqlAbstract
 {
     /**
      * @var Conn

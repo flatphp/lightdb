@@ -36,7 +36,7 @@ $data = $conn->fetchAll($sql, 2);
 $data = $conn->fetchAllTo('MyModel', $sql, 2);
 
 // fetch row to class
-$data = $conn->fetchTo('MyModel', $sql, 2);
+$data = $conn->fetchRowTo('MyModel', $sql, 2);
 ```
 
 
@@ -97,17 +97,21 @@ DB::conn('db2')->fetchPairs($sql);
 
 ## Select
 ```php
-DB::query()->select('users', 'name, age')->where('age>?', 10)->fetchAll();
+DB::select('users', 'name, age')->where('age>?', 10)->fetchAll();
 
 // to class
-DB::query()->select('users', 'name, age')->where('age>?', 10)->fetchAll('MyModel');
+// force read from master
+DB::query(null, ['master' => true])->select('users', 'name, age')->where('age>?', 10)->fetchAll('MyModel');
+
+// fetch to class
+DB::select('users', 'name, age')->where('age>?', 10)->fetchAllTo('MyModel');
 
 // nested
 DB::query('db2')->select('users')->where(function($w){
     return $w->where('sex=?', 1)->orWhere('class in ??', [1,2]);
 })->where('age>?', 10)->fetchRow();
 
-DB::query()->select('users as u', 'u.id, u.name')
+DB::select('users as u', 'u.id, u.name')
     ->leftJoin('score as s', 'u.user_id=s.user_id')
     ->where('class=?', 1)
     ->orderBy('u.id DESC')
@@ -117,7 +121,7 @@ DB::query()->select('users as u', 'u.id, u.name')
 
 ## Insert
 ```php
-DB::query()->insert('users', array(
+DB::insert('users', array(
     'name' => 'peter',
     'age' => 12,
     'sex' => 1
@@ -126,7 +130,7 @@ DB::query()->insert('users', array(
 
 ## Update
 ```php
-use Lightdb\Builder\Raw;
+use Lightdb\Query\Raw;
 
 DB::query('other')->update('users', array(
     'class' => 1,
@@ -137,7 +141,7 @@ DB::query('other')->update('users', array(
 ## Delete
 ```php
 // get delete sql
-$query = DB::query()->delete('users')->where('id=?', 10);
+$query = DB::delete('users')->where('id=?', 10);
 $sql = $query->getSql();
 $bind = $query->getBind();
 
@@ -145,6 +149,6 @@ $bind = $query->getBind();
 DB::query()->delete('users')->where('id not in ??', [1,2,3])->log();
 
 // execute
-DB::query()->delete('users')->where('id not in ??', [1,2,3])->execute();
+DB::query('another')->delete('users')->where('id not in ??', [1,2,3])->execute();
 ```
 

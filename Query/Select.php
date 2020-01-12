@@ -1,9 +1,9 @@
-<?php namespace Lightdb\Builder;
+<?php namespace Lightdb\Query;
 
 
 use Lightdb\Conn;
 
-class Select extends BuilderAbstract
+class Select extends QueryAbstract
 {
     public $table;
     public $select = '*';
@@ -140,40 +140,44 @@ class Select extends BuilderAbstract
         return $this->bind;
     }
 
-    public function fetchAll($name = null)
+    public function fetchAll()
     {
-        if ($name) {
-            return $this->conn->fetchAllTo($name, $this->getSql(), $this->bind);
-        } else {
-            return $this->conn->fetchAll($this->getSql(), $this->bind);
-        }
+        return $this->conn->fetchAll($this->getSql(), $this->bind);
     }
 
-    public function fetchAllIndexed($name = null)
+    public function fetchAllTo($name)
     {
-        if ($name) {
-            return $this->conn->fetchAllIndexedTo($name, $this->getSql(), $this->bind);
-        } else {
-            return $this->conn->fetchAllIndexed($this->getSql(), $this->bind);
-        }
+        return $this->conn->fetchAllTo($name, $this->getSql(), $this->bind);
     }
 
-    public function fetchAllGrouped($name = null)
+    public function fetchAllIndexed()
     {
-        if ($name) {
-            return $this->conn->fetchAllGroupedTo($name, $this->getSql(), $this->bind);
-        } else {
-            return $this->conn->fetchAllGrouped($this->getSql(), $this->bind);
-        }
+        return $this->conn->fetchAllIndexed($this->getSql(), $this->bind);
     }
 
-    public function fetchRow($name = null)
+    public function fetchAllIndexedTo($name)
     {
-        if ($name) {
-            return $this->conn->fetchRowTo($name, $this->getSql(), $this->bind);
-        } else {
-            return $this->conn->fetchRow($this->getSql(), $this->bind);
-        }
+        return $this->conn->fetchAllIndexedTo($name, $this->getSql(), $this->bind);
+    }
+
+    public function fetchAllGrouped()
+    {
+        return $this->conn->fetchAllGrouped($this->getSql(), $this->bind);
+    }
+
+    public function fetchAllGroupedTo($name)
+    {
+        return $this->conn->fetchAllGroupedTo($name, $this->getSql(), $this->bind);
+    }
+
+    public function fetchRow()
+    {
+        return $this->conn->fetchRow($this->getSql(), $this->bind);
+    }
+
+    public function fetchRowTo($name)
+    {
+        return $this->conn->fetchRowTo($name, $this->getSql(), $this->bind);
     }
 
     public function fetchColumn()

@@ -11,7 +11,7 @@ class Conn
     protected $txns = 0; // nested transactions
     protected $pdo_master;
     protected $pdo_slave;
-    protected $force = 0;
+    protected $force = false;
 
     /**
      * [
@@ -59,7 +59,6 @@ class Conn
         if (null === $this->pdo_master) {
             $this->pdo_master = $this->connect($this->conf_master, $this->options);
         }
-        $this->force = 0; // reset force
         return $this->pdo_master;
     }
 
@@ -69,7 +68,7 @@ class Conn
      */
     protected function slavePDO()
     {
-        if (empty($this->conf_slaves) || $this->txns > 0 || $this->force == 1) {
+        if (empty($this->conf_slaves) || $this->txns > 0 || $this->force) {
             return $this->masterPDO();
         }
         if (null === $this->pdo_slave) {
@@ -98,7 +97,7 @@ class Conn
      */
     public function master()
     {
-        $this->force = 1;
+        $this->force = true;
         return $this;
     }
 
@@ -256,6 +255,7 @@ class Conn
             $stmt->setFetchMode($fetch_mode, $fetch_arg);
         }
         $stmt->execute($this->bind($bind));
+        $this->force = false; // reset force
         return $stmt;
     }
 

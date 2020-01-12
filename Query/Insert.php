@@ -1,9 +1,9 @@
-<?php namespace Lightdb\Builder;
+<?php namespace Lightdb\Query;
 
 
 use Lightdb\Conn;
 
-class Insert extends BuilderAbstract
+class Insert extends QueryAbstract
 {
     public function __construct(Conn $conn, $table, array $data)
     {

@@ -1,9 +1,9 @@
-<?php namespace Lightdb\Builder;
+<?php namespace Lightdb\Query;
 
 
 use Lightdb\Conn;
 
-class Update extends BuilderAbstract
+class Update extends QueryAbstract
 {
     protected $table;
     protected $data;

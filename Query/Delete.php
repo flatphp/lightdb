@@ -1,9 +1,9 @@
-<?php namespace Lightdb\Builder;
+<?php namespace Lightdb\Query;
 
 
 use Lightdb\Conn;
 
-class Delete extends BuilderAbstract
+class Delete extends QueryAbstract
 {
     protected $table;
     /**

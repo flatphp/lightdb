@@ -1,4 +1,4 @@
-<?php namespace Lightdb\Builder;
+<?php namespace Lightdb\Query;
 
 
 class Join extends SqlAbstract
