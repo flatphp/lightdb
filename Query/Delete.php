@@ -7,7 +7,7 @@ class Delete extends QueryAbstract
 {
     protected $table;
     /**
-     * @var Where
+     * @var WhereSql
      */
     protected $where;
     protected $order = '';
@@ -17,7 +17,7 @@ class Delete extends QueryAbstract
     {
         $this->conn = $conn;
         $this->table = $table;
-        $this->where = new Where();
+        $this->where = new WhereSql();
     }
 
     public function where($where, $bind = null)
@@ -46,36 +46,25 @@ class Delete extends QueryAbstract
 
     protected function assemble()
     {
-        if ($this->sql) {
-            return;
-        }
-        $this->sql = 'DELETE FROM '. $this->table;
+        $sql = 'DELETE FROM '. $this->table;
+        $bind = [];
         // where
         $where = $this->where->getSql();
         if ($where) {
-            $this->sql .= ' WHERE '. $where;
-            $this->bind = array_merge($this->bind, $this->where->getBind());
+            $sql .= ' WHERE '. $where;
+            $bind = array_merge($bind, $this->where->getBind());
         }
         // order by
-        $this->sql .= $this->order;
+        $sql .= $this->order;
         // limit
-        $this->sql .= $this->limit;
-    }
+        $sql .= $this->limit;
 
-    public function getSql()
-    {
-        $this->assemble();
-        return $this->sql;
-    }
-
-    public function getBind()
-    {
-        $this->assemble();
-        return $this->bind;
+        return ['sql' => $sql, 'bind' => $bind];
     }
 
     public function execute()
     {
-        return $this->conn->execute($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->execute($query['sql'], $query['bind']);
     }
 }

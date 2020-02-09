@@ -107,9 +107,12 @@ DB::query(null, ['master' => true])->select('users', 'name, age')->where('age>?'
 DB::select('users', 'name, age')->where('age>?', 10)->fetchAllTo('MyModel');
 
 // nested
-DB::query('db2')->select('users')->where(function($w){
+$q = DB::query('db2')->select('users')->withCount();
+$q->where(function($w){
     return $w->where('sex=?', 1)->orWhere('class in ??', [1,2]);
-})->where('age>?', 10)->fetchRow();
+})->where('age>?', 10)->page(1, 10)->fetchAll();
+// total
+$count = $q->count();
 
 DB::select('users as u', 'u.id, u.name')
     ->leftJoin('score as s', 'u.user_id=s.user_id')

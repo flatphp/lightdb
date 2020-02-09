@@ -5,50 +5,57 @@ use Lightdb\Conn;
 
 class Select extends QueryAbstract
 {
-    public $table;
-    public $select = '*';
+    protected $table;
+    protected $select = '*';
+    protected $found_rows = '';
     /**
-     * @var Join[]
+     * @var JoinSql[]
      */
-    public $joins = [];
+    protected $joins = [];
     /**
-     * @var Where
+     * @var WhereSql
      */
     protected $where;
-    public $group = '';
-    public $order = '';
-    public $limit = '';
-    public $offset = '';
+    protected $group = '';
+    protected $order = '';
+    protected $limit = '';
+    protected $offset = '';
 
     public function __construct(Conn $conn, $table, $select = '*')
     {
         $this->conn = $conn;
         $this->table = $table;
         $this->select = $select;
-        $this->where = new Where();
+        $this->where = new WhereSql();
+    }
+
+    public function withCount()
+    {
+        $this->found_rows = ' SQL_CALC_FOUND_ROWS ';
+        return $this;
     }
 
     public function leftJoin($table, $on, $bind = null)
     {
-        $this->joins[] = new Join(Join::TYPE_LEFT, $table, $on, $bind);
+        $this->joins[] = new JoinSql(JoinSql::TYPE_LEFT, $table, $on, $bind);
         return $this;
     }
 
     public function rightJoin($table, $on, $bind = null)
     {
-        $this->joins[] = new Join(Join::TYPE_RIGHT, $table, $on, $bind);
+        $this->joins[] = new JoinSql(JoinSql::TYPE_RIGHT, $table, $on, $bind);
         return $this;
     }
 
     public function innerJoin($table, $on, $bind = null)
     {
-        $this->joins[] = new Join(Join::TYPE_INNER, $table, $on, $bind);
+        $this->joins[] = new JoinSql(JoinSql::TYPE_INNER, $table, $on, $bind);
         return $this;
     }
 
     public function fullJoin($table, $on, $bind = null)
     {
-        $this->joins[] = new Join(Join::TYPE_FULL, $table, $on, $bind);
+        $this->joins[] = new JoinSql(JoinSql::TYPE_FULL, $table, $on, $bind);
         return $this;
     }
 
@@ -103,100 +110,106 @@ class Select extends QueryAbstract
 
     protected function assemble()
     {
-        if ($this->sql) {
-            return;
-        }
-        $this->sql = 'SELECT '. $this->select .' FROM '. $this->table;
+        $sql = 'SELECT ' . $this->found_rows . $this->select .' FROM '. $this->table;
+        $bind = [];
         // join
         foreach ($this->joins as $join) {
-            $this->sql .= $join->getSql();
-            $this->bind = array_merge($this->bind, $join->getBind());
+            $sql .= $join->getSql();
+            $bind = array_merge($bind, $join->getBind());
         }
         // where
         $where = $this->where->getSql();
         if ($where) {
-            $this->sql .= ' WHERE '. $where;
-            $this->bind = array_merge($this->bind, $this->where->getBind());
+            $sql .= ' WHERE '. $where;
+            $bind = array_merge($bind, $this->where->getBind());
         }
         // group by
-        $this->sql .= $this->group;
+        $sql .= $this->group;
         // order by
-        $this->sql .= $this->order;
+        $sql .= $this->order;
         // limit
-        $this->sql .= $this->limit;
+        $sql .= $this->limit;
         // offset
-        $this->sql .= $this->offset;
-    }
+        $sql .= $this->offset;
 
-    public function getSql()
-    {
-        $this->assemble();
-        return $this->sql;
-    }
-
-    public function getBind()
-    {
-        $this->assemble();
-        return $this->bind;
+        return ['sql' => $sql, 'bind' => $bind];
     }
 
     public function fetchAll()
     {
-        return $this->conn->fetchAll($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchAll($query['sql'], $query['bind']);
     }
 
     public function fetchAllTo($name)
     {
-        return $this->conn->fetchAllTo($name, $this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchAllTo($name, $query['sql'], $query['bind']);
     }
 
     public function fetchAllIndexed()
     {
-        return $this->conn->fetchAllIndexed($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchAllIndexed($query['sql'], $query['bind']);
     }
 
     public function fetchAllIndexedTo($name)
     {
-        return $this->conn->fetchAllIndexedTo($name, $this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchAllIndexedTo($name, $query['sql'], $query['bind']);
     }
 
     public function fetchAllGrouped()
     {
-        return $this->conn->fetchAllGrouped($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchAllGrouped($query['sql'], $query['bind']);
     }
 
     public function fetchAllGroupedTo($name)
     {
-        return $this->conn->fetchAllGroupedTo($name, $this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchAllGroupedTo($name, $query['sql'], $query['bind']);
     }
 
     public function fetchRow()
     {
-        return $this->conn->fetchRow($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchRow($query['sql'], $query['bind']);
     }
 
     public function fetchRowTo($name)
     {
-        return $this->conn->fetchRowTo($name, $this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchRowTo($name, $query['sql'], $query['bind']);
     }
 
     public function fetchColumn()
     {
-        return $this->conn->fetchColumn($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchColumn($query['sql'], $query['bind']);
     }
 
     public function fetchPairs()
     {
-        return $this->conn->fetchPairs($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchPairs($query['sql'], $query['bind']);
     }
 
     public function fetchPairsGrouped()
     {
-        return $this->conn->fetchPairsGrouped($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchPairsGrouped($query['sql'], $query['bind']);
     }
 
     public function fetchOne()
     {
-        return $this->conn->fetchOne($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->fetchOne($query['sql'], $query['bind']);
+    }
+
+    public function count()
+    {
+        $sql = 'SELECT FOUND_ROWS()';
+        return $this->conn->fetchOne($sql);
     }
 }

@@ -1,7 +1,7 @@
 <?php namespace Lightdb\Query;
 
 
-class Join extends SqlAbstract
+class JoinSql extends SqlAbstract
 {
     const TYPE_LEFT = 'LEFT';
     const TYPE_RIGHT = 'RIGHT';

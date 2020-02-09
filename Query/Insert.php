@@ -5,26 +5,25 @@ use Lightdb\Conn;
 
 class Insert extends QueryAbstract
 {
+    /**
+     * @var InsertSql
+     */
+    protected $insert;
+
     public function __construct(Conn $conn, $table, array $data)
     {
         $this->conn = $conn;
-        $cols = [];
-        $vals = [];
-        foreach ($data as $k => $v) {
-            $cols[] = $k;
-            if ($v instanceof Raw) {
-                $vals[] = $v->getValue();
-                unset($data[$k]);
-            } else {
-                $vals[] = '?';
-            }
-        }
-        $this->bind = $this->bind($data);
-        $this->sql = 'INSERT INTO '. $table .' ('. implode(', ', $cols) .') VALUES ('. implode(', ', $vals) . ')';
+        $this->insert = new InsertSql($table, $data);
+    }
+
+    protected function assemble()
+    {
+        return ['sql' => $this->insert->getSql(), 'bind' => $this->insert->getBind()];
     }
 
     public function execute()
     {
-        return $this->conn->execute($this->sql, $this->bind);
+        $query = $this->assemble();
+        return $this->conn->execute($query['sql'], $query['bind']);
     }
 }

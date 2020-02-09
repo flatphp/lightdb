@@ -5,10 +5,12 @@ use Lightdb\Conn;
 
 class Update extends QueryAbstract
 {
-    protected $table;
-    protected $data;
     /**
-     * @var Where
+     * @var UpdateSql
+     */
+    protected $update;
+    /**
+     * @var WhereSql
      */
     protected $where;
     protected $order = '';
@@ -17,9 +19,8 @@ class Update extends QueryAbstract
     public function __construct(Conn $conn, $table, array $data)
     {
         $this->conn = $conn;
-        $this->table = $table;
-        $this->data = $data;
-        $this->where = new Where();
+        $this->update = new UpdateSql($table, $data);
+        $this->where = new WhereSql();
     }
 
     public function where($where, $bind = null)
@@ -48,47 +49,26 @@ class Update extends QueryAbstract
 
     protected function assemble()
     {
-        if ($this->sql) {
-            return;
-        }
-        $sets = [];
-        foreach ($this->data as $k => $v) {
-            if ($v instanceof Raw) {
-                $val = $v->getValue();
-                unset($this->data[$k]);
-            } else {
-                $val = '?';
-            }
-            $sets[] = $k . '=' . $val;
-        }
-        $this->sql = 'UPDATE '. $this->table .' SET ' . implode(',', $sets);
-        $this->bind = $this->bind($this->data);
+        $sql = $this->update->getSql();
+        $bind = $this->update->getBind();
+
         // where
         $where = $this->where->getSql();
         if ($where) {
-            $this->sql .= ' WHERE '. $where;
-            $this->bind = array_merge($this->bind, $this->where->getBind());
+            $sql .= ' WHERE '. $where;
+            $bind = array_merge($bind, $this->where->getBind());
         }
         // order by
-        $this->sql .= $this->order;
+        $sql .= $this->order;
         // limit
-        $this->sql .= $this->limit;
-    }
+        $sql .= $this->limit;
 
-    public function getSql()
-    {
-        $this->assemble();
-        return $this->sql;
-    }
-
-    public function getBind()
-    {
-        $this->assemble();
-        return $this->bind;
+        return ['sql' => $sql, 'bind' => $bind];
     }
 
     public function execute()
     {
-        return $this->conn->execute($this->getSql(), $this->bind);
+        $query = $this->assemble();
+        return $this->conn->execute($query['sql'], $query['bind']);
     }
 }

@@ -1,7 +1,7 @@
 <?php namespace Lightdb\Query;
 
 
-class Where extends SqlAbstract
+class WhereSql extends SqlAbstract
 {
     public function where($where, $bind = null)
     {
@@ -19,8 +19,8 @@ class Where extends SqlAbstract
             $this->sql .= " {$type} ";
         }
         if (is_callable($where)) {
-            /** @var Where $sub */
-            $sub = $where(new Where());
+            /** @var WhereSql $sub */
+            $sub = $where(new WhereSql());
             $this->sql .= '('. $sub->getSql() .')';
             $bind = $sub->getBind();
         } else {
