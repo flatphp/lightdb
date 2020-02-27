@@ -1,4 +1,5 @@
-<?php namespace Lightdb\Query;
+<?php namespace Lightdb;
+
 
 class Raw
 {

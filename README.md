@@ -97,61 +97,53 @@ DB::conn('db2')->fetchPairs($sql);
 
 ## Select
 ```php
-DB::select('users', 'name, age')->where('age>?', 10)->fetchAll();
+use Lightdb\DB;
 
-// to class
-// force read from master
-DB::query(null, ['master' => true])->select('users', 'name, age')->where('age>?', 10)->fetchAll('MyModel');
+$conn = DB::conn();
 
-// fetch to class
-DB::select('users', 'name, age')->where('age>?', 10)->fetchAllTo('MyModel');
+DB::query()->table('users')->select('name, age')->where('age>?', 10)->fetchRow();
 
-// nested
-$q = DB::query('db2')->select('users')->withCount();
-$q->where(function($w){
-    return $w->where('sex=?', 1)->orWhere('class in ??', [1,2]);
-})->where('age>?', 10)->page(1, 10)->fetchAll();
-// total
-$count = $q->count();
-
-DB::select('users as u', 'u.id, u.name')
+// read from master
+$query = DB::query($conn, ['master' => true])->table('users as u')->select('u.id, u.name')
     ->leftJoin('score as s', 'u.user_id=s.user_id')
-    ->where('class=?', 1)
-    ->orderBy('u.id DESC')
-    ->page(1, 10)
-    ->log();
+    ->where('class=?', 1)->orWhere('(age>12 AND sex=1)')
+    ->orderBy('u.id DESC');
+$result = $query->page(1, 10)->fetchAll();
+$count = $query->count();
 ```
 
 ## Insert
 ```php
-DB::insert('users', array(
+use Lightdb\DB;
+
+DB::query()->table('users')->insert(array(
     'name' => 'peter',
     'age' => 12,
     'sex' => 1
-))->execute();
+));
 ```
 
 ## Update
 ```php
-use Lightdb\Query\Raw;
+use Lightdb\DB;
+use Lightdb\Raw;
 
-DB::query('other')->update('users', array(
+DB::query('other')->table('users')->whereIn('name', ['peter', 'tom'])->update(array(
     'class' => 1,
-    'point' => Raw('point+1')
-))->where('name in ??', ['peter', 'tom'])->execute();
+    'point' => new Raw('point+1')
+));
 ```
 
 ## Delete
 ```php
-// get delete sql
-$query = DB::delete('users')->where('id=?', 10);
-$sql = $query->getSql();
-$bind = $query->getBind();
+use Lightdb\DB;
 
-// only print sql and bind
-DB::query()->delete('users')->where('id not in ??', [1,2,3])->log();
+// get delete sql
+DB::query()->where('id=?', 10)->delete();
 
 // execute
-DB::query('another')->delete('users')->where('id not in ??', [1,2,3])->execute();
+$query = DB::query('another');
+$query->table('users')->whereNotIn('id', [1,2,3])->delete();
+print_r($query->getLog());
 ```
 
