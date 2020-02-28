@@ -114,7 +114,7 @@ class Conn
     }
 
     /**
-     * fetch all with firest field as indexed key, empty array returned if nothing or false
+     * fetch all with first field as indexed key, empty array returned if nothing or false
      * @param string $sql
      * @param mixed $bind
      * @return array

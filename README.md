@@ -39,6 +39,22 @@ $data = $conn->fetchAllTo('MyModel', $sql, 2);
 $data = $conn->fetchRowTo('MyModel', $sql, 2);
 ```
 
+# Support Fetch Method
+| method | intro |
+| --- | --- |
+| fetchAll | fetch all array with assoc, empty array returned if nothing or false |
+| fetchAllIndexed | fetch all with first field as indexed key, empty array returned if nothing or false |
+| fetchAllGrouped | fetch all grouped array with first field as keys, empty array returned if nothing or false |
+| fetchRow | fetch one row array with assoc, empty array returned if nothing or false |
+| fetchColumn | fetch first column array, empty array returned if nothing or false |
+| fetchPairs | fetch pairs of first column as Key and second column as Value, empty array returned if nothing or false |
+| fetchPairsGrouped | fetch grouped pairs of K/V with first field as keys of grouped array, empty array returned if nothing of false |
+| fetchOne | fetch one field value, false returned if nothing or false |
+| fetchAllTo | fetch all to classes array, empty array returned if nothing or false |
+| fetchAllIndexedTo | fetch all to classes array with firest field as indexed key, empty array returned if nothing or false |
+| fetchAllGroupedTo | fetch all grouped array with first field as keys, empty array returned if nothing or false |
+| fetchRowTo | fetch one row to class, empty array returned if nothing or false |
+
 
 # Master-Slaves
 ```php
@@ -101,7 +117,7 @@ use Lightdb\DB;
 
 $conn = DB::conn();
 
-DB::query()->table('users')->select('name, age')->where('age>?', 10)->fetchRow();
+DB::query($conn)->table('users')->select('name, age')->where('age>?', 10)->fetchRow();
 
 // read from master
 $query = DB::query($conn, ['master' => true])->table('users as u')->select('u.id, u.name')
@@ -147,3 +163,29 @@ $query->table('users')->whereNotIn('id', [1,2,3])->delete();
 print_r($query->getLog());
 ```
 
+#### Query Join Method
+* leftJoin($table, $on, $bind = null)
+* rightJoin($table, $on, $bind = null)
+* innerJoin($table, $on, $bind = null)
+* fullJoin($table, $on, $bind = null)
+
+#### Query Where Method
+* where($where, $bind = null)
+* whereIn($field, array $values)
+* whereNotIn($field, array $values)
+* orWhere($where, $bind = null)
+* orWhereIn($field, array $values)
+* orWhereNotIn($field, array $values)
+
+#### Query Limit and Offset
+* limit($limit, $offset = 0)
+* offset($offset)
+* page($page, $page_size = 10)
+
+#### Query Count
+* count() (ignore limit and offset)
+
+#### Execute
+* insert(array $data)
+* update(array $data)
+* delete()
