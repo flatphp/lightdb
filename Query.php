@@ -196,15 +196,30 @@ class Query
     {
         $this->sql = "SELECT COUNT(*) FROM $this->table";
         // join
-        foreach ($this->joins as $join) {
-            $this->sql .= ' ' . $join['type'] .' JOIN '. $join['table'] .' ON '. $join['on'];
-        }
+        $this->sql .= $this->getJoin();
         // where
         $this->sql .= $this->getWhere();
         // group by
         $this->sql .= $this->group;
         $this->bind = array_merge($this->join_binds, $this->where_binds);
-        return $this->conn->fetchOne($this->sql, $this->bind);
+        return (int)$this->conn->fetchOne($this->sql, $this->bind);
+    }
+
+    /**
+     * get if record exists, return true or false
+     * @return int
+     */
+    public function exists()
+    {
+        $this->sql = "SELECT EXISTS (SELECT * FROM $this->table";
+        // join
+        $this->sql .= $this->getJoin();
+        // where
+        $this->sql .= $this->getWhere();
+        // group by
+        $this->sql .= $this->group .')';
+        $this->bind = array_merge($this->join_binds, $this->where_binds);
+        return (bool)$this->conn->fetchOne($this->sql, $this->bind);
     }
 
     /**
@@ -292,9 +307,7 @@ class Query
     {
         $this->sql = "SELECT $this->select FROM $this->table";
         // join
-        foreach ($this->joins as $join) {
-            $this->sql .= ' ' . $join['type'] .' JOIN '. $join['table'] .' ON '. $join['on'];
-        }
+        $this->sql .= $this->getJoin();
         // where
         $this->sql .= $this->getWhere();
         // group by
@@ -324,6 +337,19 @@ class Query
                 continue;
             }
             $sql .= ' '. $where['type'] .' '. $where['where'];
+        }
+        return $sql;
+    }
+
+    /**
+     * get the part of join
+     * @return string
+     */
+    protected function getJoin()
+    {
+        $sql = '';
+        foreach ($this->joins as $join) {
+            $sql .= ' ' . $join['type'] .' JOIN '. $join['table'] .' ON '. $join['on'];
         }
         return $sql;
     }

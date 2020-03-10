@@ -172,10 +172,10 @@ class Conn
     }
 
     /**
-     * fetch one row array with assoc, empty array returned if nothing or false
+     * fetch one row array with assoc, false is returned if failure
      * @param string $sql
      * @param mixed $bind
-     * @return array
+     * @return array|false
      */
     public function fetchRow($sql, $bind = null)
     {
@@ -183,11 +183,11 @@ class Conn
     }
 
     /**
-     * fetch one row to class, empty array returned if nothing or false
+     * fetch one row to class, false is returned if failure
      * @param string $name
      * @param string $sql
      * @param mixed $bind
-     * @return array
+     * @return object|false
      */
     public function fetchRowTo($name, $sql, $bind = null)
     {

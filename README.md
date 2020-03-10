@@ -45,7 +45,7 @@ $data = $conn->fetchRowTo('MyModel', $sql, 2);
 | fetchAll | fetch all array with assoc, empty array returned if nothing or false |
 | fetchAllIndexed | fetch all with first field as indexed key, empty array returned if nothing or false |
 | fetchAllGrouped | fetch all grouped array with first field as keys, empty array returned if nothing or false |
-| fetchRow | fetch one row array with assoc, empty array returned if nothing or false |
+| fetchRow | fetch one row array with assoc, false is returned if failure |
 | fetchColumn | fetch first column array, empty array returned if nothing or false |
 | fetchPairs | fetch pairs of first column as Key and second column as Value, empty array returned if nothing or false |
 | fetchPairsGrouped | fetch grouped pairs of K/V with first field as keys of grouped array, empty array returned if nothing of false |
@@ -53,7 +53,7 @@ $data = $conn->fetchRowTo('MyModel', $sql, 2);
 | fetchAllTo | fetch all to classes array, empty array returned if nothing or false |
 | fetchAllIndexedTo | fetch all to classes array with firest field as indexed key, empty array returned if nothing or false |
 | fetchAllGroupedTo | fetch all grouped array with first field as keys, empty array returned if nothing or false |
-| fetchRowTo | fetch one row to class, empty array returned if nothing or false |
+| fetchRowTo | fetch one row to class, false is returned if failure |
 
 
 # Master-Slaves
