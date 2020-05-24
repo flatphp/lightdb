@@ -108,6 +108,39 @@ DB::conn('db1')->fetchRow($sql);
 DB::conn('db2')->fetchPairs($sql);
 ```
 
+# Transaction
+```php
+use \Lightdb\DB;
+
+$transaction = DB::transaction();
+$transaction->onCommit(function (){
+    // do something after transaction commit
+});
+$transaction->onRollback(function (){
+    // do something after transaction rollback
+});
+$transaction->run(function(\Lightdb\Conn $conn){
+    // do something
+});
+```
+another way:
+```php
+use \Lightdb\DB;
+$transaction = DB::transaction();
+$transaction->beginTransaction();
+$transaction->onCommit(function (){
+    // do something after transaction commit
+});
+try {
+    // do something
+    $transaction->commit();
+} catch (\Lightdb\TransactionEventException $e) {
+    throw $e;
+} catch (\Exception $e) {
+    $transaction->rollback();
+    throw $e;
+}
+```
 
 # Query Builder
 
@@ -117,10 +150,10 @@ use Lightdb\DB;
 
 $conn = DB::conn();
 
-DB::query($conn)->table('users')->select('name, age')->where('age>?', 10)->fetchRow();
+$conn->query()->table('users')->select('name, age')->where('age>?', 10)->fetchRow();
 
 // read from master
-$query = DB::query($conn, ['master' => true])->table('users as u')->select('u.id, u.name')
+$query = DB::query(['master' => true])->table('users as u')->select('u.id, u.name')
     ->leftJoin('score as s', 'u.user_id=s.user_id')
     ->where('class=?', 1)->orWhere('(age>12 AND sex=1)')
     ->orderBy('u.id DESC');
@@ -144,7 +177,7 @@ DB::query()->table('users')->insert(array(
 use Lightdb\DB;
 use Lightdb\Raw;
 
-DB::query('other')->table('users')->whereIn('name', ['peter', 'tom'])->update(array(
+DB::conn('other')->query()->table('users')->whereIn('name', ['peter', 'tom'])->update(array(
     'class' => 1,
     'point' => new Raw('point+1')
 ));
@@ -158,7 +191,7 @@ use Lightdb\DB;
 DB::query()->where('id=?', 10)->delete();
 
 // execute
-$query = DB::query('another');
+$query = DB::conn('another')->query();
 $query->table('users')->whereNotIn('id', [1,2,3])->delete();
 print_r($query->getLog());
 ```

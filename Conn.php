@@ -8,10 +8,10 @@ class Conn
     protected $conf_master;
     protected $conf_slaves = [];
     protected $options = [];
-    protected $txns = 0; // nested transactions
     protected $pdo_master;
     protected $pdo_slave;
     protected $force = false;
+    protected $transaction;
 
     /**
      * [
@@ -283,51 +283,30 @@ class Conn
         return $this->masterPDO()->lastInsertId();
     }
 
-    /**
-     * Start a new database transaction.
-     * @return void
-     */
-    public function beginTransaction()
-    {
-        ++$this->txns;
-        if ($this->txns == 1) {
-            $this->masterPDO()->beginTransaction();
-        }
-    }
 
     /**
-     * Commit the active database transaction.
-     * @return void
+     * get transaction
+     * @return Transaction
      */
-    public function commit()
+    public function transaction()
     {
-        if ($this->txns == 1) {
-            $this->masterPDO()->commit();
+        if (null === $this->transaction) {
+            $this->transaction = new Transaction($this);
         }
-        --$this->txns;
+        return $this->transaction;
     }
 
-    /**
-     * Rollback the active database transaction.
-     * @return void
-     */
-    public function rollBack()
-    {
-        if ($this->txns == 1) {
-            $this->masterPDO()->rollBack();
-            $this->txns = 0;
-        } else {
-            --$this->txns;
-        }
-    }
 
     /**
-     * @return int
+     * get new query instance based this connection
+     * @param array $options
+     * @return Query
      */
-    public function getTransactionLevel()
+    public function query(array $options = [])
     {
-        return $this->txns;
+        return new Query($this, $options);
     }
+
 
     /**
      * Parse bind as array

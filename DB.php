@@ -1,6 +1,26 @@
 <?php namespace Lightdb;
 
 
+/**
+ * @method static \PDO getPDO()
+ * @method static Conn master()
+ * @method static array fetchAll($sql, $bind = null)
+ * @method static array fetchAllIndexed($sql, $bind = null)
+ * @method static array fetchAllGrouped($sql, $bind = null)
+ * @method static array fetchAllTo($name, $sql, $bind = null)
+ * @method static array fetchAllIndexedTo($name, $sql, $bind = null)
+ * @method static array fetchAllGroupedTo($name, $sql, $bind = null)
+ * @method static array|false fetchRow($sql, $bind = null)
+ * @method static object|false fetchRowTo($name, $sql, $bind = null)
+ * @method static array fetchColumn($sql, $bind = null)
+ * @method static array fetchPairs($sql, $bind = null)
+ * @method static array fetchPairsGrouped($sql, $bind = null)
+ * @method static mixed fetchOne($sql, $bind = null)
+ * @method static bool execute($sql, $bind = null, &$affected_rows = 0)
+ * @method static string getLastInsertId()
+ * @method static Query query(array $options = [])
+ * @method static Transaction transaction()
+ */
 class DB
 {
     protected static $conf;
@@ -25,18 +45,6 @@ class DB
             self::$conns[$name] = new Conn($conf);
         }
         return self::$conns[$name];
-    }
-
-    /**
-     * @param string|null $name
-     * @return Query
-     */
-    public static function query($conn = null, array $options = [])
-    {
-        if (!$conn instanceof Conn) {
-            $conn = self::conn($conn);
-        }
-        return new Query($conn, $options);
     }
 
     /**
