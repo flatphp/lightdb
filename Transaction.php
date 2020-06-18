@@ -37,9 +37,6 @@ class Transaction
         try {
             $res = $func($this->conn);
             $this->commit();
-            return $res;
-        } catch (TransactionEventException $e) {
-            throw $e;
         } catch (\Exception $e) {
             $this->rollBack();
             throw $e;
@@ -47,6 +44,13 @@ class Transaction
             $this->rollback();
             throw $e;
         }
+        // if last commit then trigger event
+        if ($this->txns == 0) {
+            foreach ($this->successes as $func) {
+                $func();
+            }
+        }
+        return $res;
     }
 
     /**
@@ -68,13 +72,6 @@ class Transaction
     {
         if ($this->txns == 1) {
             $this->conn->getPDO()->commit();
-            try {
-                foreach ($this->successes as $func) {
-                    $func();
-                }
-            } catch (\Exception $e) {
-                throw new TransactionEventException($e->getMessage(), $e->getCode(), $e);
-            }
         }
         $this->txns = max(0, $this->txns - 1);
     }
