@@ -16,40 +16,35 @@ class Transaction
         $this->conn = $conn;
     }
 
-    public function onCommit(callable $func)
-    {
-        $this->successes[] = $func;
-    }
-
-    public function onRollback(callable $func)
-    {
-        $this->fails[] = $func;
-    }
-
     /**
      * @param callable $func
+     * @param callable|null $success
+     * @param callable|null $fail
      * @return mixed
      * @throws \Exception|\Throwable
      */
-    public function run(callable $func)
+    public function run(callable $func, callable $success = null, callable $fail = null)
     {
+        if (null !== $success) {
+            $this->successes[] = $success;
+        }
+        if (null !== $fail) {
+            $this->fails[] = $fail;
+        }
         $this->beginTransaction();
         try {
-            $res = $func($this->conn);
+            $res = $func($this);
             $this->commit();
         } catch (\Exception $e) {
             $this->rollBack();
+            $this->handleFail();
             throw $e;
         } catch (\Throwable $e) {
             $this->rollback();
+            $this->handleFail();
             throw $e;
         }
-        // if last commit then trigger event
-        if ($this->txns == 0) {
-            foreach ($this->successes as $func) {
-                $func();
-            }
-        }
+        $this->handleSuccess();
         return $res;
     }
 
@@ -84,13 +79,8 @@ class Transaction
     {
         if ($this->txns == 1) {
             $this->conn->getPDO()->rollBack();
-            $this->txns = 0;
-            foreach ($this->fails as $func) {
-                $func();
-            }
-        } else {
-            $this->txns--;
         }
+        $this->txns = max(0, $this->txns - 1);
     }
 
     /**
@@ -99,5 +89,29 @@ class Transaction
     public function getTransactionLevel()
     {
         return $this->txns;
+    }
+
+    /**
+     * trigger success event after commit performed
+     */
+    protected function handleSuccess()
+    {
+        if ($this->txns == 0) {
+            foreach ($this->successes as $func) {
+                $func();
+            }
+        }
+    }
+
+    /**
+     * trigger fail event after rollback performed
+     */
+    protected function handleFail()
+    {
+        if ($this->txns == 0) {
+            foreach ($this->fails as $func) {
+                $func();
+            }
+        }
     }
 }

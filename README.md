@@ -113,29 +113,23 @@ DB::conn('db2')->fetchPairs($sql);
 use \Lightdb\DB;
 
 $transaction = DB::transaction();
-$transaction->onCommit(function (){
-    // do something after transaction commit
-});
-$transaction->onRollback(function (){
-    // do something after transaction rollback
-});
-$transaction->run(function(\Lightdb\Conn $conn){
+$transaction->run(function(){
     // do something
+}, function(){
+    // do something after commit
+}, function(){
+    // do something after rollback
 });
 ```
+
 another way:
 ```php
 use \Lightdb\DB;
 $transaction = DB::transaction();
 $transaction->beginTransaction();
-$transaction->onCommit(function (){
-    // do something after transaction commit
-});
 try {
     // do something
     $transaction->commit();
-} catch (\Lightdb\TransactionEventException $e) {
-    throw $e;
 } catch (\Exception $e) {
     $transaction->rollback();
     throw $e;
