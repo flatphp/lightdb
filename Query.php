@@ -83,11 +83,20 @@ class Query
 
     public function whereIn($field, array $values, $type = 'AND', $in = 'IN')
     {
+        if (empty($values)) {
+            if ($in == 'IN') {
+                $where = '1=0';
+            } else {
+                $where = '1=1';
+            }
+        } else {
+            $where = $field .' '. $in .' ('. implode(',', array_fill(0, count($values), '?')) .')';
+            $this->where_binds = $this->addBind($this->where_binds, $values);
+        }
         $this->wheres[] = array(
             'type' => $type,
-            'where' => $field .' '. $in .' ('. implode(',', array_fill(0, count($values), '?')) .')'
+            'where' => $where
         );
-        $this->where_binds = $this->addBind($this->where_binds, $values);
         return $this;
     }
 
