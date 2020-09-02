@@ -90,7 +90,7 @@ class Query
                 $where = '1=1';
             }
         } else {
-            $where = $field .' '. $in .' ('. implode(',', array_fill(0, count($values), '?')) .')';
+            $where = $field . ' ' . $in . ' (' . implode(',', array_fill(0, count($values), '?')) . ')';
             $this->where_binds = $this->addBind($this->where_binds, $values);
         }
         $this->wheres[] = array(
@@ -122,13 +122,13 @@ class Query
 
     public function groupBy($group)
     {
-        $this->group = ' GROUP BY '. $group;
+        $this->group = ' GROUP BY ' . $group;
         return $this;
     }
 
     public function orderBy($order)
     {
-        $this->order = ' ORDER BY '. $order;
+        $this->order = ' ORDER BY ' . $order;
         return $this;
     }
 
@@ -142,7 +142,7 @@ class Query
     public function offset($offset)
     {
         if ($offset > 0) {
-            $this->offset = ' OFFSET '. $offset;
+            $this->offset = ' OFFSET ' . $offset;
         }
         return $this;
     }
@@ -226,7 +226,7 @@ class Query
         // where
         $this->sql .= $this->getWhere();
         // group by
-        $this->sql .= $this->group .')';
+        $this->sql .= $this->group . ')';
         $this->bind = array_merge($this->join_binds, $this->where_binds);
         return (bool)$this->conn->fetchOne($this->sql, $this->bind);
     }
@@ -237,20 +237,7 @@ class Query
      */
     public function insert(array $data)
     {
-        $cols = [];
-        $vals = [];
-        foreach ($data as $k => $v) {
-            $cols[] = $k;
-            if ($v instanceof Raw) {
-                $vals[] = $v->getValue();
-                unset($data[$k]);
-            } else {
-                $vals[] = '?';
-            }
-        }
-        $this->sql = 'INSERT INTO '. $this->table .' ('. implode(', ', $cols) .') VALUES ('. implode(', ', $vals) . ')';
-        $this->bind = array_values($data);
-        return $this->conn->execute($this->sql, $this->bind);
+        return $this->conn->execute($this->compileInsert($data), $this->bind);
     }
 
     /**
@@ -259,25 +246,7 @@ class Query
      */
     public function update(array $data)
     {
-        $sets = [];
-        foreach ($data as $k => $v) {
-            if ($v instanceof Raw) {
-                $val = $v->getValue();
-                unset($data[$k]);
-            } else {
-                $val = '?';
-            }
-            $sets[] = $k . '=' . $val;
-        }
-        $this->sql = 'UPDATE '. $this->table .' SET ' . implode(',', $sets);
-        // where
-        $this->sql .= $this->getWhere();
-        // order by
-        $this->sql .= $this->order;
-        // limit
-        $this->sql .= $this->limit;
-        $this->bind = array_merge(array_values($data), $this->where_binds);
-        return $this->conn->execute($this->sql, $this->bind);
+        return $this->conn->execute($this->compileUpdate($data), $this->bind);
     }
 
     /**
@@ -285,15 +254,7 @@ class Query
      */
     public function delete()
     {
-        $this->sql = 'DELETE FROM '. $this->table;
-        // where
-        $this->sql .= $this->getWhere();
-        // order by
-        $this->sql .= $this->order;
-        // limit
-        $this->sql .= $this->limit;
-        $this->bind = $this->where_binds;
-        return $this->conn->execute($this->sql, $this->bind);
+        return $this->conn->execute($this->compileDelete(), $this->bind);
     }
 
     /**
@@ -306,6 +267,30 @@ class Query
             'sql' => $this->sql,
             'bind' => $this->bind
         );
+    }
+
+    public function previewSelect()
+    {
+        $this->compileSelect();
+        return $this->getLog();
+    }
+
+    public function previewInsert(array $data)
+    {
+        $this->compileInsert($data);
+        return $this->getLog();
+    }
+
+    public function previewUpdate(array $data)
+    {
+        $this->compileUpdate($data);
+        return $this->getLog();
+    }
+
+    public function previewDelete()
+    {
+        $this->compileDelete();
+        return $this->getLog();
     }
 
     /**
@@ -328,6 +313,60 @@ class Query
         // offset
         $this->sql .= $this->offset;
         $this->bind = array_merge($this->join_binds, $this->where_binds);
+        return $this->sql;
+    }
+
+    protected function compileInsert(array $data)
+    {
+        $cols = [];
+        $vals = [];
+        foreach ($data as $k => $v) {
+            $cols[] = $k;
+            if ($v instanceof Raw) {
+                $vals[] = $v->getValue();
+                unset($data[$k]);
+            } else {
+                $vals[] = '?';
+            }
+        }
+        $this->sql = 'INSERT INTO '. $this->table .' ('. implode(', ', $cols) .') VALUES ('. implode(', ', $vals) . ')';
+        $this->bind = array_values($data);
+        return $this->sql;
+    }
+
+    protected function compileUpdate(array $data)
+    {
+        $sets = [];
+        foreach ($data as $k => $v) {
+            if ($v instanceof Raw) {
+                $val = $v->getValue();
+                unset($data[$k]);
+            } else {
+                $val = '?';
+            }
+            $sets[] = $k . '=' . $val;
+        }
+        $this->sql = 'UPDATE '. $this->table .' SET ' . implode(',', $sets);
+        // where
+        $this->sql .= $this->getWhere();
+        // order by
+        $this->sql .= $this->order;
+        // limit
+        $this->sql .= $this->limit;
+        $this->bind = array_merge(array_values($data), $this->where_binds);
+        return $this->sql;
+    }
+
+    protected function compileDelete()
+    {
+        $this->sql = 'DELETE FROM '. $this->table;
+        // where
+        $this->sql .= $this->getWhere();
+        // order by
+        $this->sql .= $this->order;
+        // limit
+        $this->sql .= $this->limit;
+        $this->bind = $this->where_binds;
         return $this->sql;
     }
 
