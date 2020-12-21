@@ -226,7 +226,7 @@ class Conn
     {
         $data = [];
         foreach ($this->selectPrepare($sql, $bind)->fetchAll(PDO::FETCH_NUM) as $row) {
-            $data[$row[0]] = [$row[1] => $row[2]];
+            $data[$row[0]][$row[1]] = $row[2];
         }
         return $data;
     }
