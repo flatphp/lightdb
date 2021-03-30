@@ -1,15 +1,17 @@
 # Lightdb
 Lightdb is a simple db component.
+轻量DB库
 
-# Install
+# Install 安装
 ```
 composer require flatphp/lightdb
 ```
 
-# Usage
+# Usage 使用
 ```php
 use \Lightdb\DB;
 
+// config 配置
 $conf = array(
     'dsn' => 'mysql:host=localhost;dbname=testdb',
     'username' => 'root',
@@ -17,11 +19,13 @@ $conf = array(
     'options' => [PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8']
 );
 
+// init 初始化
 DB::init($conf);
 
+// raw sql 原生sql使用
 $sql = 'select * from test where id>?';
 
-// static use
+// static use 静态门面模式使用
 $data = DB::fetchAllIndexed($sql, 2);
 
 $sql = 'insert into test(aa, bb) values(?, ?)';
@@ -33,6 +37,7 @@ $sql = 'select * from channel where id>?';
 $data = $conn->fetchAll($sql, 2);
 
 // fetch all to classes array
+// 数据实例化对象
 $data = $conn->fetchAllTo('MyModel', $sql, 2);
 
 // fetch row to class
@@ -47,6 +52,7 @@ $data = $conn->fetchRowTo('MyModel', $sql, 2);
 | fetchAllGrouped | fetch all grouped array with first field as keys, empty array returned if nothing or false |
 | fetchRow | fetch one row array with assoc, false is returned if failure |
 | fetchColumn | fetch first column array, empty array returned if nothing or false |
+| fetchColumnGrouped | fetch grouped column array with first field as keys of grouped array, empty array returned if nothing or false |
 | fetchPairs | fetch pairs of first column as Key and second column as Value, empty array returned if nothing or false |
 | fetchPairsGrouped | fetch grouped pairs of K/V with first field as keys of grouped array, empty array returned if nothing of false |
 | fetchOne | fetch one field value, false returned if nothing or false |
@@ -56,7 +62,7 @@ $data = $conn->fetchRowTo('MyModel', $sql, 2);
 | fetchRowTo | fetch one row to class, false is returned if failure |
 
 
-# Master-Slaves
+# Master-Slaves 主从使用
 ```php
 use \Lightdb\DB;
 
@@ -90,11 +96,12 @@ $sql = 'select * from test';
 $data = DB::fetchAll($sql);
 
 // force read from master
+// 强制从主库读取
 $sql = 'select * from test';
 $data = DB::master()->fetchAll($sql);
 ```
 
-# Multiple DB Instance
+# Multiple DB Instance 多DB实例
 ```php
 use \Lightdb\DB;
 
@@ -108,7 +115,7 @@ DB::conn('db1')->fetchRow($sql);
 DB::conn('db2')->fetchPairs($sql);
 ```
 
-# Transaction
+# Transaction 事务
 ```php
 use \Lightdb\DB;
 
@@ -136,7 +143,7 @@ try {
 }
 ```
 
-# Query Builder
+# Query Builder sql构建查询
 
 ## Select
 ```php

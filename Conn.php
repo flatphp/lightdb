@@ -137,14 +137,18 @@ class Conn
 
     /**
      * fetch all to classes array, empty array returned if nothing or false
+     * 由于PDO::FETCH_CLASS可控性差，因此通过构造实例化对象
      * @param string $name
      * @param string $sql
      * @param mixed $bind
+     * @param callable $handle
      * @return array
      */
-    public function fetchAllTo($name, $sql, $bind = null)
+    public function fetchAllTo($name, $sql, $bind = null, callable $handle = null)
     {
-        return $this->selectPrepare($sql, $bind, PDO::FETCH_CLASS, $name)->fetchAll();
+        return array_map(function ($item) use($name, $handle) {
+            return $this->newObj($name, $item, $handle);
+        }, $this->fetchAll($sql, $bind));
     }
 
     /**
@@ -152,11 +156,14 @@ class Conn
      * @param string $name
      * @param string $sql
      * @param mixed $bind
+     * @param callable $handle
      * @return array
      */
-    public function fetchAllIndexedTo($name, $sql, $bind = null)
+    public function fetchAllIndexedTo($name, $sql, $bind = null, callable $handle = null)
     {
-        return $this->selectPrepare($sql, $bind, PDO::FETCH_CLASS, $name)->fetchAll(PDO::FETCH_UNIQUE);
+        return array_map(function ($item) use($name, $handle) {
+            return $this->newObj($name, $item, $handle);
+        }, $this->fetchAllIndexed($sql, $bind));
     }
 
     /**
@@ -164,11 +171,16 @@ class Conn
      * @param string $name
      * @param string $sql
      * @param mixed $bind
+     * @param callable $handle
      * @return array
      */
-    public function fetchAllGroupedTo($name, $sql, $bind = null)
+    public function fetchAllGroupedTo($name, $sql, $bind = null, callable $handle = null)
     {
-        return $this->selectPrepare($sql, $bind, PDO::FETCH_CLASS, $name)->fetchAll(PDO::FETCH_GROUP);
+        return array_map(function ($items) use($name, $handle){
+            return array_map(function($item) use($name, $handle){
+                return $this->newObj($name, $item, $handle);
+            }, $items);
+        }, $this->fetchAllGrouped($sql, $bind));
     }
 
     /**
@@ -183,15 +195,30 @@ class Conn
     }
 
     /**
-     * fetch one row to class, false is returned if failure
+     * fetch one row to class, null is returned if failure
      * @param string $name
      * @param string $sql
      * @param mixed $bind
+     * @param callable $handle
      * @return object|false
      */
-    public function fetchRowTo($name, $sql, $bind = null)
+    public function fetchRowTo($name, $sql, $bind = null, callable $handle = null)
     {
-        return $this->selectPrepare($sql, $bind, PDO::FETCH_CLASS, $name)->fetch();
+        $data = $this->fetchRow($sql, $bind);
+        if (empty($data)) {
+            return null;
+        }
+        return $this->newObj($name, $data, $handle);
+    }
+
+
+    protected function newObj($name, $data, callable $handle = null)
+    {
+        $obj = new $name($data);
+        if (isset($handle)) {
+            $obj = $handle($obj);
+        }
+        return $obj;
     }
 
     /**
@@ -203,6 +230,21 @@ class Conn
     public function fetchColumn($sql, $bind = null)
     {
         return $this->selectPrepare($sql, $bind)->fetchAll(PDO::FETCH_COLUMN, 0);
+    }
+
+    /**
+     * fetch grouped column array with first field as keys of grouped array, empty array returned if nothing or false
+     * @param string $sql
+     * @param mixed $bind
+     * @return array
+     */
+    public function fetchColumnGrouped($sql, $bind = null)
+    {
+        $data = [];
+        foreach ($this->selectPrepare($sql, $bind)->fetchAll(PDO::FETCH_NUM) as $row) {
+            $data[$row[0]][] = $row[1];
+        }
+        return $data;
     }
 
     /**

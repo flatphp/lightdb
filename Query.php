@@ -172,14 +172,39 @@ class Query
         return $this->conn->fetchAllGrouped($this->compileSelect(), $this->bind);
     }
 
+    public function fetchAllTo($name, callable $handle = null)
+    {
+        return $this->conn->fetchAllTo($name, $this->compileSelect(), $this->bind, $handle);
+    }
+
+    public function fetchAllIndexedTo($name, callable $handle = null)
+    {
+        return $this->conn->fetchAllIndexedTo($name, $this->compileSelect(), $this->bind, $handle);
+    }
+
+    public function fetchAllGroupedTo($name, callable $handle = null)
+    {
+        return $this->conn->fetchAllGroupedTo($name, $this->compileSelect(), $this->bind, $handle);
+    }
+
     public function fetchRow()
     {
         return $this->conn->fetchRow($this->compileSelect(), $this->bind);
     }
 
+    public function fetchRowTo($name, callable $handle = null)
+    {
+        return $this->conn->fetchRowTo($name, $this->compileSelect(), $this->bind, $handle);
+    }
+
     public function fetchColumn()
     {
         return $this->conn->fetchColumn($this->compileSelect(), $this->bind);
+    }
+
+    public function fetchColumnGrouped()
+    {
+        return $this->conn->fetchColumnGrouped($this->compileSelect(), $this->bind);
     }
 
     public function fetchPairs()
@@ -196,6 +221,7 @@ class Query
     {
         return $this->conn->fetchOne($this->compileSelect(), $this->bind);
     }
+
 
     /**
      * get total count
